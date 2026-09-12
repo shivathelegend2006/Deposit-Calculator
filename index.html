@@ -1,0 +1,1642 @@
+<!DOCTYPE html><html lang="en" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Investment &amp; Compounding Calculator</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        fontFamily: {
+          sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+          mono: ['Geist Mono', 'monospace'],
+          serif: ['Newsreader', 'Georgia', 'serif'],
+        }
+      }
+    }
+  }
+</script>
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@300;400;500;600;700&amp;family=Inter:wght@300;400;500;600;700;800&amp;family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<style>
+  :root {
+    --accent-color: #059669;
+  }
+
+  body {
+    background-color: #FFFFFF;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    color: #18191E;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    min-height: 100vh;
+  }
+
+  .font-sans { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important; }
+  .font-mono { font-family: 'Geist Mono', monospace !important; }
+  .font-serif { font-family: 'Newsreader', Georgia, serif !important; }
+
+  /* Option 3 (Refined): Pure White Cards with Slightly Stronger Ambient Shadow */
+  .blended-card,
+  .rounded-2xl.bg-white {
+    background-color: #FFFFFF !important;
+    border-color: #DCDAD2 !important;
+    box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.08), 0 2px 8px -1px rgba(0, 0, 0, 0.04) !important;
+  }
+
+  .blended-card {
+    border: 1px solid #DCDAD2;
+    border-radius: 1.25rem;
+    padding: 1.4rem;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .blended-card:focus-within {
+    border-color: var(--accent-color) !important;
+    box-shadow: 0 12px 32px -4px rgba(0, 0, 0, 0.12), 0 4px 12px -2px rgba(0, 0, 0, 0.06) !important;
+  }
+
+  /* Solid clean range sliders adapted for light background */
+  input[type=range] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 5px;
+    border-radius: 9999px;
+    background: #DDD9CF;
+    outline: none;
+    cursor: pointer;
+  }
+
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #FFFFFF;
+    border: 2.5px solid var(--accent-color);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.18);
+    cursor: pointer;
+    transition: transform 0.15s ease;
+  }
+
+  input[type=range]::-webkit-slider-thumb:hover {
+    transform: scale(1.15);
+  }
+
+  input[type=range]::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #FFFFFF;
+    border: 2.5px solid var(--accent-color);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.18);
+    cursor: pointer;
+  }
+
+  input[type=number]::-webkit-inner-spin-button, 
+  input[type=number]::-webkit-outer-spin-button { 
+    -webkit-appearance: none; 
+    margin: 0; 
+  }
+  input[type=number] { -moz-appearance: textfield; }
+
+  .theme-sip { --accent-color: #059669; }
+  .theme-rd  { --accent-color: #2563EB; }
+  .theme-fd  { --accent-color: #DC2626; }
+
+  .chart-line {
+    stroke-dasharray: 2400;
+    stroke-dashoffset: 2400;
+    animation: drawChart 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+  @keyframes drawChart {
+    to { stroke-dashoffset: 0; }
+  }
+
+  /* Robust, highly visible keyframe animations for How It Works mechanics */
+  @keyframes sipPulse {
+    0%, 100% { transform: scale(1); opacity: 0.85; filter: drop-shadow(0 0 2px rgba(5,150,105,0.4)); }
+    50% { transform: scale(1.35); opacity: 1; filter: drop-shadow(0 0 8px rgba(16,185,129,0.9)); }
+  }
+  @keyframes sipPathFlow {
+    0% { stroke-dashoffset: 48; }
+    100% { stroke-dashoffset: 0; }
+  }
+  @keyframes sipParticleTravel {
+    0% { offset-distance: 0%; opacity: 0; }
+    10% { opacity: 1; }
+    90% { opacity: 1; }
+    100% { offset-distance: 100%; opacity: 0; }
+  }
+  .sip-node {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: sipPulse 2.2s ease-in-out infinite;
+  }
+  .sip-path {
+    stroke-dasharray: 8, 4;
+    animation: sipPathFlow 1.8s linear infinite;
+  }
+
+  @keyframes rdBarGrow {
+    0%, 100% { transform: scaleY(0.75); }
+    50% { transform: scaleY(1.05); }
+  }
+  .rd-bar {
+    transform-box: fill-box;
+    transform-origin: bottom center;
+  }
+  .rd-bar-1 { animation: rdBarGrow 2.4s ease-in-out infinite 0s; }
+  .rd-bar-2 { animation: rdBarGrow 2.4s ease-in-out infinite 0.35s; }
+  .rd-bar-3 { animation: rdBarGrow 2.4s ease-in-out infinite 0.7s; }
+  .rd-bar-4 { animation: rdBarGrow 2.4s ease-in-out infinite 1.05s; }
+
+  @keyframes fdWavePulse1 {
+    0% { r: 32px; opacity: 0.9; stroke-width: 2.5px; }
+    50% { r: 52px; opacity: 0.35; stroke-width: 1.5px; }
+    100% { r: 68px; opacity: 0; stroke-width: 0.8px; }
+  }
+  @keyframes fdWavePulse2 {
+    0% { r: 32px; opacity: 0; stroke-width: 2.5px; }
+    20% { opacity: 0.75; }
+    70% { r: 58px; opacity: 0.25; stroke-width: 1.2px; }
+    100% { r: 68px; opacity: 0; stroke-width: 0.8px; }
+  }
+  @keyframes fdRotateCenter {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+  .fd-wave-1 {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: fdWavePulse1 2.6s ease-out infinite;
+  }
+  .fd-wave-2 {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: fdWavePulse2 2.6s ease-out infinite 1.3s;
+  }
+  .fd-center-spin {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: fdRotateCenter 8s linear infinite;
+  }
+</style>
+</head>
+<body class="theme-sip" id="appBody">
+<div class="relative z-10 max-w-4xl mx-auto px-5 sm:px-8 py-8 md:py-12">
+<!-- TOP EDITORIAL HEADER -->
+<header class="flex items-center justify-between pb-6 mb-8 md:mb-10 border-b border-[#E4E2DC] gap-2.5 w-full">
+<button class="inline-flex items-center space-x-1.5 font-mono text-[11px] font-semibold px-3 py-1.5 rounded-lg border border-black bg-[#121316] text-white hover:bg-neutral-800 transition-colors shadow-sm cursor-pointer" id="navInstructionsBtn" onclick="showPage('instructions')" type="button">
+<span class="material-symbols-outlined text-[14px] text-neutral-300">menu_book</span>
+<span id="navInstructionsLabel" class="">Instructions</span>
+</button>
+<button class="inline-flex items-center space-x-1.5 font-mono text-[11px] font-semibold px-3 py-1.5 rounded-lg border border-black bg-[#121316] text-white hover:bg-neutral-800 transition-colors shadow-sm cursor-pointer" id="navToggleBtn" onclick="toggleHowItWorks()" type="button">
+<span class="material-symbols-outlined text-[14px] text-neutral-300" id="navToggleIcon">arrow_forward</span>
+<span id="navToggleLabel" class="">How It Works</span>
+</button>
+</header>
+<!-- PAGE 1: CALCULATOR -->
+<main class="block" id="pageCalculator">
+<!-- VEHICLE SELECTION -->
+<div class="mb-8">
+<div class="grid grid-cols-3 gap-3 p-1.5 bg-[#EEECE6] rounded-2xl border border-[#DCDAD2]">
+<button class="relative flex flex-col items-center justify-center text-center py-3 px-3 sm:px-5 rounded-xl font-sans cursor-pointer transition-colors bg-[#059669] text-white shadow-sm" id="planBtn-SIP" onclick="setPlan('SIP')" type="button">
+<div class="text-center">
+<span class="block text-sm sm:text-base font-bold tracking-tight leading-tight text-white">SIP</span>
+<span class="plan-sub hidden sm:block text-[11px] text-emerald-100 font-normal mt-0.5">Systematic Investment</span>
+</div>
+</button>
+<button class="relative flex flex-col items-center justify-center text-center py-3 px-3 sm:px-5 rounded-xl font-sans cursor-pointer transition-colors bg-[#141413] text-white hover:bg-[#1f1f1d] border border-[#27272a]" id="planBtn-RD" onclick="setPlan('RD')" type="button">
+<div class="text-center">
+<span class="block text-sm sm:text-base font-bold tracking-tight leading-tight text-white">RD</span>
+<span class="plan-sub hidden sm:block text-[11px] text-neutral-400 font-normal mt-0.5">Recurring Deposit</span>
+</div>
+</button>
+<button class="relative flex flex-col items-center justify-center text-center py-3 px-3 sm:px-5 rounded-xl font-sans cursor-pointer transition-colors bg-[#141413] text-white hover:bg-[#1f1f1d] border border-[#27272a]" id="planBtn-FD" onclick="setPlan('FD')" type="button">
+<div class="text-center">
+<span class="block text-sm sm:text-base font-bold tracking-tight leading-tight text-white">FD</span>
+<span class="plan-sub hidden sm:block text-[11px] text-neutral-400 font-normal mt-0.5">Fixed Deposit</span>
+</div>
+</button>
+</div>
+<div class="mt-3 flex items-start space-x-2 text-[#464742] px-1">
+<span class="material-symbols-outlined text-[17px] text-[#059669]" id="planIconNotice">info</span>
+<p class="text-xs font-normal tracking-normal leading-relaxed text-[#5F605A]" id="planSubtitle">Systematic Investment Plan — Monthly accumulation compounded through diversified equity yields.</p>
+</div>
+</div>
+<!-- MAIN FORM -->
+<form class="space-y-6" id="calcForm" onsubmit="handleCalculate(event); return false;">
+<!-- CONDITIONAL SUB-TOGGLE -->
+<div class="hidden flex flex-col sm:flex-row items-center sm:items-center justify-center sm:justify-end gap-2 pb-1 scroll-mt-8" id="targetSubToggleContainer">
+<div class="inline-flex p-1 bg-[#121316] rounded-xl border border-black shadow-sm">
+<button class="px-3.5 py-1.5 text-xs font-sans font-semibold rounded-lg transition-colors bg-white text-[#121316] shadow-sm" id="targetSubBtn-period" onclick="setTargetSubMode('period')" type="button">
+            I Know My Time Period
+          </button>
+<button class="px-3.5 py-1.5 text-xs font-sans font-semibold rounded-lg transition-colors text-neutral-400 hover:text-white" id="targetSubBtn-contrib" onclick="setTargetSubMode('contribution')" type="button">
+            I Know My Monthly Deposit
+          </button>
+</div>
+</div>
+<!-- DYNAMIC INPUT BOXES (Blended Light Cream Aesthetic) -->
+<div class="grid grid-cols-1 sm:grid-cols-3 gap-5 sm:gap-6 scroll-mt-8" id="dynamicInputsGrid"><div class="bg-white rounded-2xl border border-[#DCDAD2] p-5 sm:p-6 shadow-sm group">
+<label class="block text-xs font-sans text-[#5F605A] mb-2 group-focus-within:text-[#18191E] font-semibold transition-colors">Monthly investment (₹)</label>
+<div class="flex items-baseline">
+<input class="w-full bg-transparent font-mono text-2xl sm:text-3xl text-[#141413] focus:outline-none border-none p-0 focus:ring-0 font-bold" id="input_p" oninput="syncFromNumber('p')" onkeydown="handleInputKey(event)" placeholder="10000" step="500" type="number" value="10000">
+</div>
+<div class="mt-3.5 mb-1.5">
+<input class="w-full" id="slider_p" max="200000" min="500" oninput="syncFromSlider('p')" step="500" style="background: linear-gradient(to right, rgb(5, 150, 105) 0%, rgb(5, 150, 105) 4.7619%, rgb(221, 217, 207) 4.7619%, rgb(221, 217, 207) 100%);" type="range" value="10000">
+</div>
+<div class="flex justify-between items-center text-[10px] font-mono text-[#6A6C65]">
+<span class="">₹500</span>
+<span class="">₹2,00,000</span>
+</div>
+<div class="mt-2.5 pt-2 border-t border-[#DCD8D0] text-[11px] font-mono font-semibold truncate" id="amount_in_words" style="color: rgb(4, 120, 87);">Ten Thousand Rupees</div>
+</div>
+<div class="bg-white rounded-2xl border border-[#DCDAD2] p-5 sm:p-6 shadow-sm group">
+<label class="block text-xs font-sans text-[#5F605A] mb-2 group-focus-within:text-[#18191E] font-semibold transition-colors">Expected return (% p.a.)</label>
+<div class="flex items-baseline">
+<input class="w-full bg-transparent font-mono text-2xl sm:text-3xl text-[#141413] focus:outline-none border-none p-0 focus:ring-0 font-bold" id="input_r" oninput="syncFromNumber('r')" onkeydown="handleInputKey(event)" placeholder="12" step="0.1" type="number" value="12">
+</div>
+<div class="mt-3.5 mb-1.5">
+<input class="w-full" id="slider_r" max="30" min="1" oninput="syncFromSlider('r')" step="0.1" style="background: linear-gradient(to right, rgb(5, 150, 105) 0%, rgb(5, 150, 105) 37.931%, rgb(221, 217, 207) 37.931%, rgb(221, 217, 207) 100%);" type="range" value="12">
+</div>
+<div class="flex justify-between items-center text-[10px] font-mono text-[#6A6C65]">
+<span class="">1%</span>
+<span class="">30%</span>
+</div>
+</div>
+<div class="bg-white rounded-2xl border border-[#DCDAD2] p-5 sm:p-6 shadow-sm group">
+<label class="block text-xs font-sans text-[#5F605A] mb-2 group-focus-within:text-[#18191E] font-semibold transition-colors">Time period (years)</label>
+<div class="flex items-baseline">
+<input class="w-full bg-transparent font-mono text-2xl sm:text-3xl text-[#141413] focus:outline-none border-none p-0 focus:ring-0 font-bold" id="input_t" oninput="syncFromNumber('t')" onkeydown="handleInputKey(event)" placeholder="10" step="1" type="number" value="10">
+</div>
+<div class="mt-3.5 mb-1.5">
+</div></div></div>
+<!-- BOTTOM CONTROL SECTION WITH TARGET/INVESTMENT TOGGLE ALIGNED HORIZONTALLY TO THE LEFT OF CALCULATE BUTTON -->
+<div class="pt-6 border-t border-[#E4E2DC] flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
+<!-- Main Mode Toggle -->
+<div class="inline-flex p-1 bg-[#121316] rounded-xl border border-black shadow-sm self-center sm:self-auto">
+<button class="px-3.5 py-1.5 text-xs font-sans font-semibold rounded-lg transition-colors bg-white text-[#121316] shadow-sm" id="calcModeBtn-inv" onclick="setCalcMode('investment')" type="button">
+            I Know My Investment
+          </button>
+<button class="px-3.5 py-1.5 text-xs font-sans font-semibold rounded-lg transition-colors text-neutral-400 hover:text-white" id="calcModeBtn-target" onclick="setCalcMode('target')" type="button">
+            I Know My Target
+          </button>
+</div>
+<!-- Action CTA -->
+<button class="text-white font-sans text-sm font-bold tracking-wide py-3.5 px-8 rounded-xl flex items-center justify-center space-x-2 w-full sm:w-auto cursor-pointer bg-[#059669] hover:bg-[#047857] active:scale-[0.98] transition-all shadow-sm" id="mainSubmitBtn" onclick="handleCalculate(event)" type="button">
+<span id="mainSubmitBtnText" class="">Calculate Projection</span>
+<span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+</button>
+</div>
+</form>
+<!-- RESULT SECTION -->
+<section class="hidden mt-10 md:mt-12 pt-8 border-t border-[#E4E2DC] transition-all duration-300 scroll-mt-10" id="resultSection">
+<div class="space-y-6">
+<!-- Result Cards -->
+<div class="bg-[#121316] rounded-2xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden border border-black" id="resultSpotlightCard">
+<div class="flex flex-col sm:flex-row sm:items-baseline justify-between gap-2 border-b border-white/10 pb-5 mb-5">
+<div>
+<span class="text-xs font-mono tracking-wider text-neutral-400 block mb-1" id="resultMainLabel">Maturity Amount</span>
+<span class="text-4xl sm:text-5xl md:text-6xl font-semibold tracking-tight text-white font-serif" id="resultMainAmount" style="letter-spacing: -0.03em;">₹0</span>
+</div>
+<span class="text-xs font-mono text-neutral-400" id="resultExtraPill"></span>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div class="bg-white/5 border border-white/10 rounded-xl p-4">
+<span class="text-xs font-mono text-neutral-400 block mb-1" id="metric1Label">Total Invested</span>
+<span class="text-lg sm:text-2xl font-mono font-semibold text-white" id="metric1Val">₹0</span>
+</div>
+<div class="bg-white/5 border border-white/10 rounded-xl p-4" id="metric2Container">
+<span class="text-xs font-mono text-neutral-400 block mb-1" id="metric2Label">Est. Returns</span>
+<span class="text-lg sm:text-2xl font-mono font-bold text-emerald-400" id="metric2Val">₹0</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Growth Trajectory Comparison Button -->
+<div class="mt-8 pt-6 border-t border-[#E4E2DC] flex justify-end">
+<button class="inline-flex items-center space-x-2 px-4 py-2 rounded-xl bg-[#121316] hover:bg-neutral-800 text-white text-xs font-mono font-medium cursor-pointer transition-colors shadow-sm" id="compareBtn" onclick="toggleComparison(true)" type="button">
+<span class="">Compare</span>
+<span class="material-symbols-outlined text-[17px]" id="compareBtnIcon">expand_more</span>
+</button>
+</div>
+<div class="hidden mt-6 pt-1 scroll-mt-10" id="comparisonSection">
+<div class="bg-[#121316] rounded-2xl p-5 sm:p-7 text-white shadow-xl border border-black">
+<div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-white/10 mb-5 gap-3">
+<div class="flex items-center gap-2">
+<span class="text-xs font-mono text-neutral-300 font-semibold">Peak Max Returns:</span>
+<span class="text-xs font-mono font-bold text-emerald-400" id="peakMaxAmount">₹0</span>
+</div>
+<div class="flex flex-wrap items-center gap-2 sm:gap-2.5 text-xs font-mono">
+<div class="flex items-center space-x-1.5 px-3 py-1 rounded-lg bg-emerald-950/80 border border-emerald-500/50 text-emerald-400">
+<span class="w-2 h-2 bg-[#059669] rounded-full inline-block"></span>
+<span class="">SIP</span>
+</div>
+<div class="flex items-center space-x-1.5 px-3 py-1 rounded-lg bg-blue-950/80 border border-blue-500/50 text-blue-400">
+<span class="w-2 h-2 bg-[#2563EB] rounded-full inline-block"></span>
+<span class="">RD</span>
+</div>
+<div class="flex items-center space-x-1.5 px-3 py-1 rounded-lg bg-red-950/80 border border-red-500/50 text-red-400">
+<span class="w-2 h-2 bg-[#DC2626] rounded-full inline-block"></span>
+<span class="">FD</span>
+</div>
+</div>
+</div>
+<div class="relative w-full" id="graphWrapper">
+<svg class="w-full h-64 sm:h-80 overflow-visible cursor-crosshair select-none" id="chartSvg" preserveAspectRatio="none" viewBox="0 0 700 240">
+<line stroke="#26282E" stroke-dasharray="3,3" stroke-width="1" x1="0" x2="700" y1="20" y2="20"></line>
+<line stroke="#26282E" stroke-dasharray="3,3" stroke-width="1" x1="0" x2="700" y1="75" y2="75"></line>
+<line stroke="#26282E" stroke-dasharray="3,3" stroke-width="1" x1="0" x2="700" y1="135" y2="135"></line>
+<line stroke="#383B44" stroke-width="1" x1="0" x2="700" y1="195" y2="195"></line>
+<path d="" fill="none" id="areaFD"></path>
+<path d="" fill="none" id="areaRD"></path>
+<path d="" fill="none" id="areaSIP"></path>
+<path d="" fill="none" id="pathFD" stroke="#DC2626" stroke-linecap="round" stroke-width="2.5"></path>
+<path d="" fill="none" id="pathRD" stroke="#2563EB" stroke-linecap="round" stroke-width="2.5"></path>
+<path d="" fill="none" id="pathSIP" stroke="#059669" stroke-linecap="round" stroke-width="3.5"></path>
+<line class="hidden" id="hoverLine" stroke="#FFFFFF" stroke-dasharray="3,3" stroke-opacity="0.5" stroke-width="1.5" x1="0" x2="0" y1="20" y2="195"></line>
+<circle class="hidden" cx="0" cy="0" fill="#DC2626" id="dotFD" r="5" stroke="#FFFFFF" stroke-width="2"></circle>
+<circle class="hidden" cx="0" cy="0" fill="#2563EB" id="dotRD" r="5" stroke="#FFFFFF" stroke-width="2"></circle>
+<circle class="hidden" cx="0" cy="0" fill="#059669" id="dotSIP" r="6.5" stroke="#FFFFFF" stroke-width="2.5"></circle>
+</svg>
+<div class="absolute pointer-events-none hidden bg-[#18191E] text-white p-3.5 rounded-xl border border-white/20 z-30 min-w-[220px] shadow-lg" id="chartTooltip">
+<div class="flex items-center justify-between border-b border-white/10 pb-1.5 mb-2">
+<span class="font-mono text-xs text-neutral-300 font-semibold" id="tooltipYear">Year 10</span>
+<span class="text-[10px] font-mono px-1.5 py-0.5 bg-white/10 text-neutral-300 rounded">Comparison</span>
+</div>
+<div class="space-y-1.5 font-mono text-xs">
+<div class="flex items-center justify-between">
+<span class="flex items-center space-x-1.5 text-emerald-400"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span><span class="">SIP</span></span>
+<span class="font-bold text-white" id="tooltipSIP">₹0</span>
+</div>
+<div class="flex items-center justify-between">
+<span class="flex items-center space-x-1.5 text-blue-400"><span class="w-1.5 h-1.5 rounded-full bg-blue-400"></span><span class="">RD</span></span>
+<span class="font-bold text-white" id="tooltipRD">₹0</span>
+</div>
+<div class="flex items-center justify-between">
+<span class="flex items-center space-x-1.5 text-red-400"><span class="w-1.5 h-1.5 rounded-full bg-red-400"></span><span class="">FD</span></span>
+<span class="font-bold text-white" id="tooltipFD">₹0</span>
+</div>
+</div>
+</div>
+<div class="flex justify-between mt-3 font-mono text-xs text-neutral-400 px-1 border-t border-white/10 pt-2" id="chartXAxis"></div>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- PAGE 2: HOW IT WORKS -->
+<section class="hidden" id="pageHowItWorks">
+<div class="p-5 sm:p-6 mb-8 rounded-2xl bg-white border border-[#DCDAD2] shadow-sm">
+<div class="flex items-start sm:items-center space-x-3.5">
+<div class="w-9 h-9 rounded-xl bg-emerald-100 border border-emerald-300 flex items-center justify-center shrink-0 text-[#059669]">
+<span class="material-symbols-outlined text-[20px]">verified</span>
+</div>
+<div>
+<h4 class="text-sm font-semibold text-[#121316] tracking-wide">Where Do the Formulae Come From?</h4>
+<p class="text-xs sm:text-sm text-[#5F605A] leading-relaxed mt-1">Formulas aligned with standard banking benchmarks &amp; regulatory compounding conventions (RBI / Indian Banking Standards for SIP, RD quarterly compounding, and FD cumulative annual compounding).</p>
+</div>
+</div>
+</div>
+<div class="bg-white rounded-2xl border border-[#DCDAD2] p-6 sm:p-8 mb-8 shadow-sm">
+<div class="text-center mb-6">
+<h2 class="font-serif text-2xl sm:text-3xl text-[#121316]">How Each Instrument Compounds</h2>
+</div>
+<div class="flex justify-center mb-6">
+<div class="inline-flex p-1 bg-[#EEECE6] rounded-xl border border-[#DCDAD2] gap-1">
+<button class="px-4 py-1.5 text-xs font-mono font-bold rounded-lg transition-all bg-[#059669] text-white cursor-pointer" id="dialTab-SIP" onclick="selectDialVehicle('SIP')" type="button">SIP Mechanics</button>
+<button class="px-4 py-1.5 text-xs font-mono font-semibold rounded-lg transition-all text-[#5F605A] hover:text-[#121316] cursor-pointer" id="dialTab-RD" onclick="selectDialVehicle('RD')" type="button">RD Mechanics</button>
+<button class="px-4 py-1.5 text-xs font-mono font-semibold rounded-lg transition-all text-[#5F605A] hover:text-[#121316] cursor-pointer" id="dialTab-FD" onclick="selectDialVehicle('FD')" type="button">FD Mechanics</button>
+</div>
+</div>
+<div class="pt-2">
+<div class="block" id="animContainer-SIP">
+<div class="flex flex-col items-center justify-center bg-[#F4F3EE] p-6 rounded-xl border border-[#E2E0D8]">
+<div class="w-full flex justify-center py-2">
+<svg class="w-56 h-48 overflow-visible" viewBox="0 0 160 140">
+<!-- Central trunk with continuous upward growth aesthetic -->
+<path d="M 80 135 L 80 85" fill="none" stroke="#059669" stroke-linecap="round" stroke-width="4"></path>
+<path class="sip-path" d="M 80 85 C 65 65, 40 60, 30 40" fill="none" stroke="#059669" stroke-linecap="round" stroke-width="3"></path>
+<path class="sip-path" d="M 80 85 C 95 65, 120 60, 130 40" fill="none" stroke="#059669" stroke-linecap="round" stroke-width="3"></path>
+<path class="sip-path" d="M 80 85 L 80 32" fill="none" stroke="#059669" stroke-linecap="round" stroke-width="2.5"></path>
+<path class="sip-path" d="M 50 62 C 45 45, 55 35, 50 20" fill="none" stroke="#10B981" stroke-linecap="round" stroke-width="2.5"></path>
+<path class="sip-path" d="M 110 62 C 115 45, 105 35, 110 20" fill="none" stroke="#10B981" stroke-linecap="round" stroke-width="2.5"></path>
+<!-- Dynamic pulsing compounding yield nodes -->
+<circle class="sip-node" cx="30" cy="40" fill="#059669" r="5.5"></circle>
+<circle class="sip-node" cx="130" cy="40" fill="#059669" r="5.5" style="animation-delay: 0.6s;"></circle>
+<circle class="sip-node" cx="80" cy="30" fill="#10B981" r="6.5" style="animation-delay: 1.2s;"></circle>
+<circle class="sip-node" cx="50" cy="20" fill="#059669" r="4.5" style="animation-delay: 0.9s;"></circle>
+<circle class="sip-node" cx="110" cy="20" fill="#059669" r="4.5" style="animation-delay: 1.5s;"></circle>
+<circle class="sip-node" cx="80" cy="85" fill="#047857" r="4" style="animation-delay: 0.3s;"></circle>
+</svg>
+</div>
+</div>
+<!-- Clean write-up box without any title or subtitle -->
+<div class="mt-4 p-4 sm:p-5 rounded-xl bg-[#F8F7F4] border border-[#E0DED7] text-xs sm:text-sm text-[#383A40] leading-relaxed">
+Systematic Investment Plans channel recurring monthly sums into diversified equity mutual funds, benefiting from rupee-cost averaging across market cycles and compounding long-term equity growth.
+</div>
+</div>
+<div class="hidden" id="animContainer-RD">
+<div class="flex flex-col items-center justify-center bg-[#F4F3EE] p-6 rounded-xl border border-[#E2E0D8]">
+<div class="w-full flex justify-center py-2">
+<svg class="w-56 h-48 overflow-visible" viewBox="0 0 160 140">
+<!-- Baseline -->
+<line stroke="#CBD5E1" stroke-linecap="round" stroke-width="1.5" x1="10" x2="150" y1="130" y2="130"></line>
+<!-- Stacking recurring deposit installments with staggered pulse -->
+<g class="rd-bar rd-bar-1"><rect fill="#2563EB" height="28" rx="3.5" width="26" x="16" y="102"></rect><text fill="#fff" font-family="'Geist Mono', monospace" font-size="9" font-weight="600" text-anchor="middle" x="29" y="120">M1</text></g>
+<g class="rd-bar rd-bar-2"><rect fill="#2563EB" height="54" rx="3.5" width="26" x="52" y="76"></rect><text fill="#fff" font-family="'Geist Mono', monospace" font-size="9" font-weight="600" text-anchor="middle" x="65" y="106">M12</text></g>
+<g class="rd-bar rd-bar-3"><rect fill="#1D4ED8" height="80" rx="3.5" width="26" x="88" y="50"></rect><text fill="#fff" font-family="'Geist Mono', monospace" font-size="9" font-weight="600" text-anchor="middle" x="101" y="92">M24</text></g>
+<g class="rd-bar rd-bar-4"><rect fill="#1E40AF" height="106" rx="3.5" width="26" x="124" y="24"></rect><text fill="#fff" font-family="'Geist Mono', monospace" font-size="9" font-weight="600" text-anchor="middle" x="137" y="78">M36</text></g>
+<!-- Trajectory connector -->
+<path class="sip-path" d="M 29 102 L 65 76 L 101 50 L 137 24" fill="none" stroke="#3B82F6" stroke-width="2.5"></path>
+<circle cx="137" cy="24" fill="#60A5FA" r="4.5" stroke="#1E40AF" stroke-width="1.5"></circle>
+</svg>
+</div>
+</div>
+<!-- Clean write-up box without any title or subtitle -->
+<div class="mt-4 p-4 sm:p-5 rounded-xl bg-[#F8F7F4] border border-[#E0DED7] text-xs sm:text-sm text-[#383A40] leading-relaxed">
+Recurring Deposits pool regular monthly deposits at a guaranteed fixed interest rate with Indian commercial banks, compounding quarterly per banking conventions with zero equity market volatility.
+</div>
+</div>
+<div class="hidden" id="animContainer-FD">
+<div class="flex flex-col items-center justify-center bg-[#F4F3EE] p-6 rounded-xl border border-[#E2E0D8]">
+<div class="w-full flex justify-center py-2">
+<svg class="w-56 h-48 overflow-visible" viewBox="0 0 160 140">
+<!-- Concentric expanding compounding pulse waves -->
+<circle class="fd-wave-1" cx="80" cy="70" fill="none" r="32" stroke="#DC2626"></circle>
+<circle class="fd-wave-2" cx="80" cy="70" fill="none" r="32" stroke="#EF4444"></circle>
+<!-- Fixed baseline locked core -->
+<circle cx="80" cy="70" fill="none" r="42" stroke="#DC2626" stroke-dasharray="5,4" stroke-opacity="0.6" stroke-width="1.5"></circle>
+<circle cx="80" cy="70" fill="#FEE2E2" r="30" stroke="#DC2626" stroke-width="2"></circle>
+<!-- Rotating vault vault-lock gear -->
+<g class="fd-center-spin">
+<rect fill="#DC2626" height="18" rx="3" width="18" x="71" y="61"></rect>
+<circle cx="80" cy="70" fill="#FFFFFF" r="3.5"></circle>
+<path d="M 75 66 L 85 74 M 85 66 L 75 74" stroke="#FFFFFF" stroke-linecap="round" stroke-width="1.5"></path>
+</g>
+</svg>
+</div>
+</div>
+<!-- Clean write-up box without any title or subtitle -->
+<div class="mt-4 p-4 sm:p-5 rounded-xl bg-[#F8F7F4] border border-[#E0DED7] text-xs sm:text-sm text-[#383A40] leading-relaxed">
+Fixed Deposits lock in a lump-sum principal with banks or NBFCs at an agreed term rate, with cumulative annual compounding that preserves capital while generating predictable returns upon maturity.
+</div>
+</div>
+</div>
+</div>
+<div class="space-y-4 max-w-2xl mx-auto">
+<article class="p-5 space-y-3 rounded-2xl bg-white border border-[#DCDAD2] shadow-sm">
+<div class="flex items-center justify-between">
+<div class="flex items-center space-x-3">
+<span class="font-mono text-xs px-2.5 py-0.5 rounded-full bg-emerald-100 text-[#059669] font-bold border border-emerald-300 shrink-0">01</span>
+<h2 class="font-serif text-xl font-bold text-[#121316]">Systematic Investment Plan (SIP)</h2>
+</div>
+<span class="text-xs font-mono text-[#059669]">Monthly Compounding</span>
+</div>
+<div class="bg-[#121316] text-white p-4 rounded-xl font-mono text-xs sm:text-sm overflow-x-auto">M = P × [((1 + i)<sup>n</sup> − 1) / i] × (1 + i)</div>
+<div class="text-xs font-mono text-[#5F605A] space-y-1 pt-1">
+<div class=""><strong class="text-[#121316]">P</strong> = Scheduled monthly installment</div>
+<div class=""><strong class="text-[#121316]">i</strong> = Monthly interest rate (Annual % ÷ 12 ÷ 100)</div>
+<div class=""><strong class="text-[#121316]">n</strong> = Total number of monthly installments (Years × 12)</div>
+</div>
+</article>
+<article class="p-5 space-y-3 rounded-2xl bg-white border border-[#DCDAD2] shadow-sm">
+<div class="flex items-center justify-between">
+<div class="flex items-center space-x-3">
+<span class="font-mono text-xs px-2.5 py-0.5 rounded-full bg-blue-100 text-[#2563EB] font-bold border border-blue-300 shrink-0">02</span>
+<h2 class="font-serif text-xl font-bold text-[#121316]">Recurring Deposit (RD)</h2>
+</div>
+<span class="text-xs font-mono text-[#2563EB]">Quarterly Compounding</span>
+</div>
+<div class="bg-[#121316] text-white p-4 rounded-xl font-mono text-xs sm:text-sm overflow-x-auto">M = ∑<sub>k=1..n</sub> P × (1 + r / 400)<sup>4 × (n − k + 1) / 12</sup></div>
+<div class="text-xs font-mono text-[#5F605A] space-y-1 pt-1">
+<div class=""><strong class="text-[#121316]">P</strong> = Monthly deposit</div>
+<div class=""><strong class="text-[#121316]">r</strong> = Annual bank interest rate (%)</div>
+<div class=""><strong class="text-[#121316]">k</strong> = Deposit installment counter from 1 to n</div>
+</div>
+</article>
+<article class="p-5 space-y-3 rounded-2xl bg-white border border-[#DCDAD2] shadow-sm">
+<div class="flex items-center justify-between">
+<div class="flex items-center space-x-3">
+<span class="font-mono text-xs px-2.5 py-0.5 rounded-full bg-red-100 text-[#DC2626] font-bold border border-red-300 shrink-0">03</span>
+<h2 class="font-serif text-xl font-bold text-[#121316]">Fixed Deposit (FD)</h2>
+</div>
+<span class="text-xs font-mono text-[#DC2626]">Lump Sum Lock</span>
+</div>
+<div class="bg-[#121316] text-white p-4 rounded-xl font-mono text-xs sm:text-sm overflow-x-auto">A = P × (1 + r / 400)<sup>4 × t</sup></div>
+<div class="text-xs font-mono text-[#5F605A] space-y-1 pt-1">
+<div class=""><strong class="text-[#121316]">P</strong> = Initial lump sum principal deposit</div>
+<div class=""><strong class="text-[#121316]">r</strong> = Annual locked bank interest rate (%)</div>
+<div class=""><strong class="text-[#121316]">t</strong> = Tenure duration in years</div>
+</div>
+</article>
+<div class="text-center pt-4">
+<button class="inline-flex items-center space-x-2 font-mono text-xs font-semibold px-6 py-3 rounded-xl border border-[#D5D3CC] bg-white text-[#121316] hover:bg-[#F2F0EB] cursor-pointer shadow-sm" onclick="showPage('calculator')" type="button">
+<span class="material-symbols-outlined text-[17px]">arrow_back</span>
+<span class="">Return to Calculator</span>
+</button>
+</div>
+</div>
+</section>
+<!-- PAGE 3: INSTRUCTIONS -->
+<section class="hidden" id="pageInstructions">
+<div class="max-w-3xl mx-auto space-y-6">
+<!-- Top Navigation & Intro Bar -->
+<div class="p-5 sm:p-6 rounded-2xl bg-white border border-[#DCDAD2] shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+<div>
+<h1 class="font-serif text-2xl sm:text-3xl text-[#121316]">How to Use This Calculator</h1>
+<p class="text-xs sm:text-sm text-[#5F605A] mt-1">A step-by-step guide to projecting and comparing your investments.</p>
+</div>
+<button class="inline-flex items-center space-x-2 font-mono text-xs font-semibold px-4 py-2.5 rounded-xl border border-[#D5D3CC] bg-[#F5F3F0] text-[#121316] hover:bg-[#EAE8E3] cursor-pointer shadow-sm transition-colors shrink-0" onclick="showPage('calculator')" type="button">
+<span class="material-symbols-outlined text-[16px]">arrow_back</span>
+<span class="">Return to Calculator</span>
+</button>
+</div>
+<!-- Step 1: Choose an investment -->
+<article class="p-5 sm:p-6 rounded-2xl bg-white border border-[#DCDAD2] shadow-sm space-y-3">
+<div class="flex items-center space-x-3">
+<span class="font-mono text-xs px-2.5 py-0.5 rounded-full bg-[#121316] text-white font-bold shrink-0">Step 1</span>
+<h2 class="font-serif text-xl font-bold text-[#121316]">Choose an investment</h2>
+</div>
+<p class="text-xs sm:text-sm text-[#5F605A] leading-relaxed">Start by selecting one of the three options at the top:</p>
+<div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-1">
+<div class="p-3 rounded-xl bg-emerald-50 border border-emerald-200/80">
+<div class="flex items-center space-x-1.5 mb-1">
+<span class="w-2 h-2 rounded-full bg-[#059669]"></span>
+<span class="font-mono text-xs font-bold text-[#059669]">SIP</span>
+</div>
+<p class="text-xs text-[#383A40]">Systematic Investment Plan</p>
+</div>
+<div class="p-3 rounded-xl bg-blue-50 border border-blue-200/80">
+<div class="flex items-center space-x-1.5 mb-1">
+<span class="w-2 h-2 rounded-full bg-[#2563EB]"></span>
+<span class="font-mono text-xs font-bold text-[#2563EB]">RD</span>
+</div>
+<p class="text-xs text-[#383A40]">Recurring Deposit</p>
+</div>
+<div class="p-3 rounded-xl bg-red-50 border border-red-200/80">
+<div class="flex items-center space-x-1.5 mb-1">
+<span class="w-2 h-2 rounded-full bg-[#DC2626]"></span>
+<span class="font-mono text-xs font-bold text-[#DC2626]">FD</span>
+</div>
+<p class="text-xs text-[#383A40]">Fixed Deposit</p>
+</div>
+</div>
+<div class="p-3 rounded-xl bg-[#F8F7F4] border border-[#E4E2DC] text-xs font-mono text-[#5F605A] flex flex-wrap items-center gap-2">
+<span class="">The colour of the calculator changes with your selection:</span>
+<span class="inline-flex items-center px-2 py-0.5 rounded-md bg-emerald-100 text-[#059669] font-semibold">Green → SIP</span>
+<span class="inline-flex items-center px-2 py-0.5 rounded-md bg-blue-100 text-[#2563EB] font-semibold">Blue → RD</span>
+<span class="inline-flex items-center px-2 py-0.5 rounded-md bg-red-100 text-[#DC2626] font-semibold">Red → FD</span>
+</div>
+</article>
+<!-- Step 2: Choose what you know -->
+<article class="p-5 sm:p-6 rounded-2xl bg-white border border-[#DCDAD2] shadow-sm space-y-3">
+<div class="flex items-center space-x-3">
+<span class="font-mono text-xs px-2.5 py-0.5 rounded-full bg-[#121316] text-white font-bold shrink-0">Step 2</span>
+<h2 class="font-serif text-xl font-bold text-[#121316]">Choose what you know</h2>
+</div>
+<p class="text-xs sm:text-sm text-[#5F605A] leading-relaxed">Use the selector below the investment options.</p>
+<div class="space-y-2.5 pt-1">
+<div class="p-3.5 rounded-xl bg-[#F8F7F4] border border-[#E0DED7]">
+<span class="font-mono text-xs font-bold text-[#121316] block mb-0.5">I Know My Investment:</span>
+<p class="text-xs sm:text-sm text-[#5F605A]">Choose this when you know how much you can invest and want to find out what it can become.</p>
+</div>
+<div class="p-3.5 rounded-xl bg-[#F8F7F4] border border-[#E0DED7]">
+<span class="font-mono text-xs font-bold text-[#121316] block mb-0.5">I Know My Target:</span>
+<p class="text-xs sm:text-sm text-[#5F605A]">Choose this when you already have a target amount and want to find out what it takes to reach it.</p>
+</div>
+</div>
+<p class="text-xs text-[#5F605A] italic">The fields shown below will change automatically based on your choice.</p>
+</article>
+<!-- Step 3: Enter your numbers -->
+<article class="p-5 sm:p-6 rounded-2xl bg-white border border-[#DCDAD2] shadow-sm space-y-3">
+<div class="flex items-center space-x-3">
+<span class="font-mono text-xs px-2.5 py-0.5 rounded-full bg-[#121316] text-white font-bold shrink-0">Step 3</span>
+<h2 class="font-serif text-xl font-bold text-[#121316]">Enter your numbers</h2>
+</div>
+<p class="text-xs sm:text-sm text-[#5F605A] leading-relaxed">Enter the values requested by the calculator.</p>
+<div class="text-xs sm:text-sm text-[#383A40] space-y-1 pl-1">
+<p class="text-[#5F605A]">Depending on the investment and mode, these may include:</p>
+<ul class="list-disc pl-5 space-y-1 text-[#121316] font-medium">
+<li class="">Investment or deposit amount</li>
+<li class="">Target amount</li>
+<li class="">Interest/expected return rate</li>
+<li class="">Investment duration</li>
+</ul>
+</div>
+<div class="p-3.5 rounded-xl bg-[#F8F7F4] border border-[#E0DED7] space-y-2">
+<p class="text-xs sm:text-sm text-[#5F605A]">You can type amounts normally. You do not need to enter ₹, %, or commas.</p>
+<div class="flex flex-wrap items-center gap-3 pt-1 text-xs font-mono">
+<div class="px-3 py-1.5 rounded-lg bg-white border border-[#DCDAD2] text-[#121316]">
+<span class="text-[#5F605A]">For example:</span> 100000 → <span class="font-semibold text-[#059669]">₹1,00,000</span>
+</div>
+<div class="px-3 py-1.5 rounded-lg bg-white border border-[#DCDAD2] text-[#121316]">
+<span class="text-[#5F605A]">For example:</span> 7.5 → <span class="font-semibold text-[#059669]">7.5%</span>
+</div>
+</div>
+</div>
+</article>
+<!-- Step 4: Calculate -->
+<article class="p-5 sm:p-6 rounded-2xl bg-white border border-[#DCDAD2] shadow-sm space-y-3">
+<div class="flex items-center space-x-3">
+<span class="font-mono text-xs px-2.5 py-0.5 rounded-full bg-[#121316] text-white font-bold shrink-0">Step 4</span>
+<h2 class="font-serif text-xl font-bold text-[#121316]">Calculate</h2>
+</div>
+<p class="text-xs sm:text-sm text-[#5F605A] leading-relaxed">
+Once all required values have been entered, press <span class="font-semibold text-[#059669]">Calculate Projection</span>.
+</p>
+<p class="text-xs sm:text-sm text-[#5F605A] leading-relaxed">
+The calculator processes your inputs and displays the estimated result.
+</p>
+<div class="space-y-2 pt-1 text-xs sm:text-sm">
+<div class="p-3 rounded-xl bg-[#F8F7F4] border border-[#E0DED7]">
+<p class="text-[#5F605A] mb-1">For an investment-based calculation, this will normally show:</p>
+<p class="font-mono text-xs font-semibold text-[#121316]">Maturity Amount · Total Invested · Estimated Profit</p>
+</div>
+<div class="p-3 rounded-xl bg-[#F8F7F4] border border-[#E0DED7]">
+<p class="text-[#5F605A] mb-1">For a target-based calculation, it will show the value you need to reach your target, such as:</p>
+<p class="font-mono text-xs font-semibold text-[#121316]">Required Monthly Investment or Time Required</p>
+</div>
+</div>
+</article>
+<!-- Step 5: Explore the result -->
+<article class="p-5 sm:p-6 rounded-2xl bg-white border border-[#DCDAD2] shadow-sm space-y-3">
+<div class="flex items-center space-x-3">
+<span class="font-mono text-xs px-2.5 py-0.5 rounded-full bg-[#121316] text-white font-bold shrink-0">Step 5</span>
+<h2 class="font-serif text-xl font-bold text-[#121316]">Explore the result</h2>
+</div>
+<p class="text-xs sm:text-sm text-[#5F605A] leading-relaxed">Your result is more than a single number.</p>
+<div class="p-4 rounded-xl bg-[#121316] text-white space-y-2">
+<p class="text-xs text-neutral-400 font-mono">The calculator separates:</p>
+<div class="grid grid-cols-1 sm:grid-cols-[1fr_auto_1fr] items-center gap-1.5 sm:gap-3 text-xs sm:text-sm font-mono border-y border-white/10 py-2.5">
+<div class="px-3 py-2 sm:p-0 rounded-lg bg-white/5 sm:bg-transparent flex items-center space-x-2">
+<span class="w-1.5 h-1.5 rounded-full bg-white shrink-0"></span>
+<span class="text-white font-medium">What you put in</span>
+</div>
+<span class="text-neutral-400 text-[10px] sm:text-xs text-center uppercase tracking-widest font-semibold py-0.5">from</span>
+<div class="px-3 py-2 sm:p-0 rounded-lg bg-emerald-500/10 sm:bg-transparent flex items-center space-x-2 sm:justify-end">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0"></span>
+<span class="text-emerald-400 font-medium">What the investment generated</span>
+</div>
+</div>
+<p class="text-xs text-neutral-300 pt-1 leading-relaxed">
+so you can see how much of the final amount came from your own contributions and how much came from estimated returns.
+</p>
+</div>
+</article>
+<!-- Step 6: Compare SIP, RD and FD -->
+<article class="p-5 sm:p-6 rounded-2xl bg-white border border-[#DCDAD2] shadow-sm space-y-3">
+<div class="flex items-center space-x-3">
+<span class="font-mono text-xs px-2.5 py-0.5 rounded-full bg-[#121316] text-white font-bold shrink-0">Step 6</span>
+<h2 class="font-serif text-xl font-bold text-[#121316]">Compare SIP, RD and FD</h2>
+</div>
+<p class="text-xs sm:text-sm text-[#5F605A] leading-relaxed">
+After calculating a result, select <span class="font-semibold text-[#121316]">Compare</span> to see all three investment paths together.
+</p>
+<p class="text-xs sm:text-sm text-[#5F605A] leading-relaxed">
+The comparison graph shows how the estimated value of:
+</p>
+<div class="p-3 rounded-xl bg-[#F8F7F4] border border-[#E0DED7] text-xs font-mono text-[#121316] font-semibold">
+SIP · RD · FD
+</div>
+<p class="text-xs sm:text-sm text-[#5F605A] leading-relaxed">
+changes year by year.
+</p>
+<div class="p-3.5 rounded-xl bg-[#F8F7F4] border border-[#E0DED7] space-y-2">
+<p class="text-xs sm:text-sm text-[#5F605A]">Each line uses its investment colour:</p>
+<div class="flex flex-wrap items-center gap-3 text-xs font-mono font-semibold">
+<span class="inline-flex items-center space-x-1 text-[#059669]"><span class="">🟢</span><span class="">SIP</span></span>
+<span class="inline-flex items-center space-x-1 text-[#2563EB]"><span class="">🔵</span><span class="">RD</span></span>
+<span class="inline-flex items-center space-x-1 text-[#DC2626]"><span class="">🔴</span><span class="">FD</span></span>
+</div>
+<p class="text-xs text-[#5F605A] pt-1">
+Move across the graph to see the estimated amount for each investment at a particular year.
+</p>
+</div>
+</article>
+<!-- Step 7: Learn how the calculations work -->
+<article class="p-5 sm:p-6 rounded-2xl bg-white border border-[#DCDAD2] shadow-sm space-y-3">
+<div class="flex items-center space-x-3">
+<span class="font-mono text-xs px-2.5 py-0.5 rounded-full bg-[#121316] text-white font-bold shrink-0">Step 7</span>
+<h2 class="font-serif text-xl font-bold text-[#121316]">Learn how the calculations work</h2>
+</div>
+<p class="text-xs sm:text-sm text-[#5F605A] leading-relaxed">
+Select <span class="font-semibold text-[#121316]">How It Works</span> at the top of the calculator.
+</p>
+<p class="text-xs sm:text-sm text-[#5F605A] leading-relaxed">This opens the explanation page, where you can explore:</p>
+<ul class="list-disc pl-5 space-y-1 text-xs sm:text-sm text-[#121316]">
+<li class="">How SIP, RD and FD work</li>
+<li class="">The calculation method used for each</li>
+<li class="">The mathematical formula behind each projection</li>
+<li class="">A visual explanation of how each investment grows</li>
+</ul>
+<p class="text-xs sm:text-sm text-[#5F605A] leading-relaxed">
+Use <span class="font-semibold text-[#121316]">Return to Calculator</span> to come back and continue calculating.
+</p>
+<!-- Explicit Highlighted Callout -->
+<div class="p-4 rounded-xl bg-emerald-50 border border-emerald-300 text-xs sm:text-sm text-[#065F46] flex items-start space-x-2.5">
+<span class="material-symbols-outlined text-[20px] text-[#059669] shrink-0">info</span>
+<div>
+<p class="font-semibold">You can see the exact mathematical formulae and compounding models in the How It Works page.</p>
+<button class="mt-2 inline-flex items-center space-x-1 font-mono text-xs font-semibold px-3 py-1 rounded-lg bg-white border border-emerald-300 text-[#059669] hover:bg-emerald-100 transition-colors cursor-pointer" onclick="showPage('howItWorks')" type="button">
+<span class="">Go to How It Works</span>
+<span class="material-symbols-outlined text-[14px]">arrow_forward</span>
+</button>
+</div>
+</div>
+</article>
+<!-- Step 8: A note about the results -->
+<article class="p-5 sm:p-6 rounded-2xl bg-white border border-[#DCDAD2] shadow-sm space-y-3">
+<div class="flex items-center space-x-3">
+<span class="font-mono text-xs px-2.5 py-0.5 rounded-full bg-[#121316] text-white font-bold shrink-0">Step 8</span>
+<h2 class="font-serif text-xl font-bold text-[#121316]">A note about the results</h2>
+</div>
+<p class="text-xs sm:text-sm text-[#5F605A] leading-relaxed">
+The calculator provides mathematical estimates based on the values you enter.
+</p>
+<p class="text-xs sm:text-sm text-[#5F605A] leading-relaxed">
+Actual returns may differ because of factors such as the interest rate offered, compounding frequency, taxes, fees, product terms and market performance.
+</p>
+<div class="p-3 rounded-xl bg-amber-50 border border-amber-200 text-xs sm:text-sm text-[#92400E] font-medium">
+SIP returns are projections, not guaranteed returns.
+</div>
+</article>
+<!-- Step 9: Quick start -->
+<article class="p-5 sm:p-6 rounded-2xl bg-white border border-[#DCDAD2] shadow-sm space-y-3">
+<div class="flex items-center space-x-3">
+<span class="font-mono text-xs px-2.5 py-0.5 rounded-full bg-[#121316] text-white font-bold shrink-0">Step 9</span>
+<h2 class="font-serif text-xl font-bold text-[#121316]">Quick start</h2>
+</div>
+<div class="p-4 rounded-xl bg-[#F8F7F4] border border-[#E0DED7]">
+<div class="flex flex-wrap items-center gap-2 font-mono text-xs sm:text-sm font-bold text-[#121316]">
+<span class="px-2.5 py-1 rounded-lg bg-white border border-[#DCDAD2]">Choose</span>
+<span class="text-[#5F605A]">→</span>
+<span class="px-2.5 py-1 rounded-lg bg-white border border-[#DCDAD2]">Enter</span>
+<span class="text-[#5F605A]">→</span>
+<span class="px-2.5 py-1 rounded-lg bg-[#059669] text-white">Calculate</span>
+<span class="text-[#5F605A]">→</span>
+<span class="px-2.5 py-1 rounded-lg bg-white border border-[#DCDAD2]">Explore</span>
+<span class="text-[#5F605A]">→</span>
+<span class="px-2.5 py-1 rounded-lg bg-white border border-[#DCDAD2]">Compare</span>
+</div>
+</div>
+<p class="text-xs sm:text-sm text-[#5F605A] italic">That's all you need to do.</p>
+</article>
+<!-- Bottom Return Button -->
+<div class="text-center pt-2 pb-6">
+<button class="inline-flex items-center space-x-2 font-mono text-xs font-semibold px-6 py-3 rounded-xl border border-[#D5D3CC] bg-white text-[#121316] hover:bg-[#F2F0EB] cursor-pointer shadow-sm transition-colors" onclick="showPage('calculator')" type="button">
+<span class="material-symbols-outlined text-[17px]">arrow_back</span>
+<span class="">Return to Calculator</span>
+</button>
+</div>
+</div>
+</section>
+</div>
+<!-- SCRIPT LOGIC -->
+<script>
+  let currentPlan = 'SIP'; // 'SIP' | 'RD' | 'FD'
+  let calcMode = 'investment'; // 'investment' | 'target'
+  let targetSubMode = 'period'; // 'period' | 'contribution'
+  let lastCalculatedData = null;
+  let comparisonDataPoints = [];
+  let activePageView = 'calculator'; // 'calculator' | 'howItWorks' | 'instructions'
+
+  const configs = {
+    SIP: {
+      investment: {
+        p: { label: 'Monthly investment (₹)', sub: 'Scheduled monthly auto-debit', val: 10000, min: 500, max: 200000, step: 500 },
+        r: { label: 'Expected return (% p.a.)', sub: 'Annualized equity yield', val: 12, min: 1, max: 30, step: 0.1 },
+        t: { label: 'Time period (years)', sub: 'Cumulative investment tenure', val: 10, min: 1, max: 35, step: 1 }
+      },
+      target_period: {
+        p: { label: 'Target goal amount (₹)', sub: 'Desired portfolio corpus', val: 2500000, min: 50000, max: 50000000, step: 25000 },
+        r: { label: 'Expected return (% p.a.)', sub: 'Annualized equity yield', val: 12, min: 1, max: 30, step: 0.1 },
+        t: { label: 'Time period (years)', sub: 'Years to achieve target', val: 10, min: 1, max: 35, step: 1 }
+      },
+      target_contribution: {
+        p: { label: 'Target goal amount (₹)', sub: 'Desired portfolio corpus', val: 2500000, min: 50000, max: 50000000, step: 25000 },
+        r: { label: 'Expected return (% p.a.)', sub: 'Annualized equity yield', val: 12, min: 1, max: 30, step: 0.1 },
+        t: { label: 'Monthly deposit (₹)', sub: 'Affordable monthly savings', val: 10000, min: 500, max: 200000, step: 500 }
+      }
+    },
+    RD: {
+      investment: {
+        p: { label: 'Monthly deposit (₹)', sub: 'Fixed monthly bank installment', val: 5000, min: 500, max: 100000, step: 500 },
+        r: { label: 'Interest rate (% p.a.)', sub: 'Guaranteed bank rate', val: 7.1, min: 3, max: 15, step: 0.1 },
+        t: { label: 'Time period (years)', sub: 'Cumulative deposit tenure', val: 5, min: 1, max: 10, step: 1 }
+      },
+      target_period: {
+        p: { label: 'Target goal amount (₹)', sub: 'Desired maturity sum', val: 500000, min: 25000, max: 20000000, step: 10000 },
+        r: { label: 'Interest rate (% p.a.)', sub: 'Guaranteed bank rate', val: 7.1, min: 3, max: 15, step: 0.1 },
+        t: { label: 'Time period (years)', sub: 'Years to achieve target', val: 5, min: 1, max: 10, step: 1 }
+      },
+      target_contribution: {
+        p: { label: 'Target goal amount (₹)', sub: 'Desired maturity sum', val: 500000, min: 25000, max: 20000000, step: 10000 },
+        r: { label: 'Interest rate (% p.a.)', sub: 'Guaranteed bank rate', val: 7.1, min: 3, max: 15, step: 0.1 },
+        t: { label: 'Monthly deposit (₹)', sub: 'Fixed monthly installment', val: 5000, min: 500, max: 100000, step: 500 }
+      }
+    },
+    FD: {
+      investment: {
+        p: { label: 'Deposit amount (₹)', sub: 'Initial principal investment', val: 100000, min: 5000, max: 2500000, step: 5000 },
+        r: { label: 'Interest rate (% p.a.)', sub: 'Fixed guaranteed annual yield', val: 7.5, min: 3, max: 15, step: 0.1 },
+        t: { label: 'Tenure duration (years)', sub: 'Deposit lock duration', val: 5, min: 1, max: 20, step: 1 }
+      },
+      target_period: {
+        p: { label: 'Target goal amount (₹)', sub: 'Desired maturity payoff', val: 500000, min: 25000, max: 25000000, step: 10000 },
+        r: { label: 'Interest rate (% p.a.)', sub: 'Fixed guaranteed annual yield', val: 7.5, min: 3, max: 15, step: 0.1 },
+        t: { label: 'Tenure duration (years)', sub: 'Deposit lock duration', val: 5, min: 1, max: 20, step: 1 }
+      },
+      target_contribution: {
+        p: { label: 'Target goal amount (₹)', sub: 'Desired maturity payoff', val: 500000, min: 25000, max: 25000000, step: 10000 },
+        r: { label: 'Interest rate (% p.a.)', sub: 'Fixed guaranteed annual yield', val: 7.5, min: 3, max: 15, step: 0.1 },
+        t: { label: 'Single deposit (₹)', sub: 'Available principal capital', val: 300000, min: 5000, max: 10000000, step: 5000 }
+      }
+    }
+  };
+
+  function numberToIndianWords(num) {
+    if (isNaN(num) || num === null || num === undefined) return '';
+    num = Math.floor(Math.abs(num));
+    if (num === 0) return 'Zero Rupees';
+
+    const a = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten',
+      'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
+    const b = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+
+    function twoDigits(n) {
+      if (n < 20) return a[n];
+      return b[Math.floor(n / 10)] + (n % 10 !== 0 ? ' ' + a[n % 10] : '');
+    }
+
+    function threeDigits(n) {
+      let str = '';
+      if (Math.floor(n / 100) > 0) {
+        str += a[Math.floor(n / 100)] + ' Hundred ';
+        n = n % 100;
+      }
+      if (n > 0) {
+        str += twoDigits(n);
+      }
+      return str.trim();
+    }
+
+    let words = '';
+    const crore = Math.floor(num / 10000000);
+    num %= 10000000;
+    const lakh = Math.floor(num / 100000);
+    num %= 100000;
+    const thousand = Math.floor(num / 1000);
+    num %= 1000;
+    const remainder = num;
+
+    if (crore > 0) {
+      words += numberToIndianWords(crore).replace(' Rupees', '') + ' Crore ';
+    }
+    if (lakh > 0) {
+      words += twoDigits(lakh) + ' Lakh ';
+    }
+    if (thousand > 0) {
+      words += twoDigits(thousand) + ' Thousand ';
+    }
+    if (remainder > 0) {
+      words += threeDigits(remainder) + ' ';
+    }
+
+    return words.trim() + ' Rupees';
+  }
+
+  function formatIndianCurrency(num) {
+    if (isNaN(num)) return '₹0';
+    const val = Math.round(num);
+    let numStr = Math.abs(val).toString();
+    let lastThree = numStr.substring(numStr.length - 3);
+    let otherNumbers = numStr.substring(0, numStr.length - 3);
+    if (otherNumbers !== '') lastThree = ',' + lastThree;
+    const formatted = otherNumbers.replace(/\B(?=(\d{2})+(?!\d))/g, ",") + lastThree;
+    return (val < 0 ? '-₹' : '₹') + formatted;
+  }
+
+  function formatIndianWordsNotation(num) {
+    if (isNaN(num)) return '₹0';
+    const abs = Math.abs(num);
+    const sign = num < 0 ? '-' : '';
+    if (abs >= 10000000) {
+      const cr = abs / 10000000;
+      const formatted = cr % 1 === 0 ? cr.toString() : parseFloat(cr.toFixed(2)).toString();
+      return `${sign}₹${formatted} Crores`;
+    } else if (abs >= 100000) {
+      const lk = abs / 100000;
+      const formatted = lk % 1 === 0 ? lk.toString() : parseFloat(lk.toFixed(2)).toString();
+      return `${sign}₹${formatted} Lakhs`;
+    } else {
+      return formatIndianCurrency(num);
+    }
+  }
+
+  function getThemeColor() {
+    if (currentPlan === 'SIP') return '#059669';
+    if (currentPlan === 'RD') return '#2563EB';
+    if (currentPlan === 'FD') return '#DC2626';
+    return '#059669';
+  }
+
+  function getActiveConfig() {
+    if (calcMode === 'investment') return configs[currentPlan].investment;
+    if (targetSubMode === 'period') return configs[currentPlan].target_period;
+    return configs[currentPlan].target_contribution;
+  }
+
+  function updateSliderBackground(slider) {
+    if (!slider) return;
+    const min = parseFloat(slider.min) || 0;
+    const max = parseFloat(slider.max) || 100;
+    const val = parseFloat(slider.value) || 0;
+    const pct = Math.max(0, Math.min(100, ((val - min) / (max - min)) * 100));
+    const accent = getThemeColor();
+    slider.style.background = `linear-gradient(to right, ${accent} 0%, ${accent} ${pct}%, #DDD9CF ${pct}%, #DDD9CF 100%)`;
+  }
+
+  function updateAmountInWords() {
+    const val = parseFloat(document.getElementById('input_p')?.value) || 0;
+    const wordEl = document.getElementById('amount_in_words');
+    if (wordEl) {
+      wordEl.innerText = numberToIndianWords(val);
+      if (currentPlan === 'SIP') {
+        wordEl.style.color = '#047857';
+      } else if (currentPlan === 'RD') {
+        wordEl.style.color = '#1D4ED8';
+      } else if (currentPlan === 'FD') {
+        wordEl.style.color = '#B91C1C';
+      }
+    }
+  }
+
+  function renderInputs() {
+    const container = document.getElementById('dynamicInputsGrid');
+    const cfg = getActiveConfig();
+
+    const unitT = (calcMode === 'target' && targetSubMode === 'contribution') ? '₹' : (currentPlan === 'FD' ? 'Yrs' : 'Yrs');
+
+    container.innerHTML = `
+      <div class="blended-card group">
+        <label class="block text-xs font-sans text-[#5F605A] mb-2 group-focus-within:text-[#18191E] font-semibold transition-colors">${cfg.p.label}</label>
+        <div class="flex items-baseline">
+          <input type="number" id="input_p" step="${cfg.p.step}" value="${cfg.p.val}" oninput="syncFromNumber('p')" onkeydown="handleInputKey(event)" class="w-full bg-transparent font-mono text-2xl sm:text-3xl text-[#141413] focus:outline-none border-none p-0 focus:ring-0 font-bold" placeholder="${cfg.p.val}">
+        </div>
+        <div class="mt-3.5 mb-1.5">
+          <input type="range" id="slider_p" min="${cfg.p.min}" max="${cfg.p.max}" step="${cfg.p.step}" value="${cfg.p.val}" oninput="syncFromSlider('p')" class="w-full">
+        </div>
+        <div class="flex justify-between items-center text-[10px] font-mono text-[#6A6C65]">
+          <span>₹${(cfg.p.min).toLocaleString('en-IN')}</span>
+          <span>₹${(cfg.p.max).toLocaleString('en-IN')}</span>
+        </div>
+        <div class="mt-2.5 pt-2 border-t border-[#DCD8D0] text-[11px] font-mono font-semibold truncate" id="amount_in_words">
+          ${numberToIndianWords(cfg.p.val)}
+        </div>
+      </div>
+
+      <div class="blended-card group">
+        <label class="block text-xs font-sans text-[#5F605A] mb-2 group-focus-within:text-[#18191E] font-semibold transition-colors">${cfg.r.label}</label>
+        <div class="flex items-baseline">
+          <input type="number" id="input_r" step="${cfg.r.step}" value="${cfg.r.val}" oninput="syncFromNumber('r')" onkeydown="handleInputKey(event)" class="w-full bg-transparent font-mono text-2xl sm:text-3xl text-[#141413] focus:outline-none border-none p-0 focus:ring-0 font-bold" placeholder="${cfg.r.val}">
+        </div>
+        <div class="mt-3.5 mb-1.5">
+          <input type="range" id="slider_r" min="${cfg.r.min}" max="${cfg.r.max}" step="${cfg.r.step}" value="${cfg.r.val}" oninput="syncFromSlider('r')" class="w-full">
+        </div>
+        <div class="flex justify-between items-center text-[10px] font-mono text-[#6A6C65]">
+          <span>${cfg.r.min}%</span>
+          <span>${cfg.r.max}%</span>
+        </div>
+      </div>
+
+      <div class="blended-card group">
+        <label class="block text-xs font-sans text-[#5F605A] mb-2 group-focus-within:text-[#18191E] font-semibold transition-colors">${cfg.t.label}</label>
+        <div class="flex items-baseline">
+          <input type="number" id="input_t" step="${cfg.t.step}" value="${cfg.t.val}" oninput="syncFromNumber('t')" onkeydown="handleInputKey(event)" class="w-full bg-transparent font-mono text-2xl sm:text-3xl text-[#141413] focus:outline-none border-none p-0 focus:ring-0 font-bold" placeholder="${cfg.t.val}">
+        </div>
+        <div class="mt-3.5 mb-1.5">
+          <input type="range" id="slider_t" min="${cfg.t.min}" max="${cfg.t.max}" step="${cfg.t.step}" value="${cfg.t.val}" oninput="syncFromSlider('t')" class="w-full">
+        </div>
+        <div class="flex justify-between items-center text-[10px] font-mono text-[#6A6C65]">
+          <span>${unitT === '₹' ? '₹' + (cfg.t.min).toLocaleString('en-IN') : cfg.t.min + ' Yr'}</span>
+          <span>${unitT === '₹' ? '₹' + (cfg.t.max).toLocaleString('en-IN') : cfg.t.max + ' Yrs'}</span>
+        </div>
+      </div>
+    `;
+
+    ['p', 'r', 't'].forEach(id => {
+      updateSliderBackground(document.getElementById(`slider_${id}`));
+    });
+
+    updateAmountInWords();
+
+    if (!document.getElementById('resultSection').classList.contains('hidden')) {
+      handleCalculate(null, false);
+    }
+  }
+
+  function syncFromSlider(field) {
+    const slider = document.getElementById(`slider_${field}`);
+    const numInput = document.getElementById(`input_${field}`);
+    if (slider && numInput) {
+      numInput.value = slider.value;
+      updateSliderBackground(slider);
+      if (field === 'p') {
+        updateAmountInWords();
+      }
+      if (!document.getElementById('resultSection').classList.contains('hidden')) {
+        handleCalculate(null, false);
+      }
+    }
+  }
+
+  function syncFromNumber(field) {
+    const slider = document.getElementById(`slider_${field}`);
+    const numInput = document.getElementById(`input_${field}`);
+    if (slider && numInput) {
+      const val = parseFloat(numInput.value);
+      if (!isNaN(val)) {
+        slider.value = val;
+        updateSliderBackground(slider);
+        if (field === 'p') {
+          updateAmountInWords();
+        }
+        if (!document.getElementById('resultSection').classList.contains('hidden')) {
+          handleCalculate(null, false);
+        }
+      }
+    }
+  }
+
+  function handleInputKey(event) {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      handleCalculate(event, true);
+    }
+  }
+
+  function setCalcMode(mode) {
+    calcMode = mode;
+    const btnInv = document.getElementById('calcModeBtn-inv');
+    const btnTarget = document.getElementById('calcModeBtn-target');
+    const subContainer = document.getElementById('targetSubToggleContainer');
+
+    if (mode === 'investment') {
+      btnInv.className = 'px-3.5 py-1.5 text-xs font-sans font-semibold rounded-lg transition-colors bg-white text-[#121316] shadow-sm';
+      btnTarget.className = 'px-3.5 py-1.5 text-xs font-sans font-semibold rounded-lg transition-colors text-neutral-400 hover:text-white';
+      subContainer.classList.add('hidden');
+    } else {
+      btnTarget.className = 'px-3.5 py-1.5 text-xs font-sans font-semibold rounded-lg transition-colors bg-white text-[#121316] shadow-sm';
+      btnInv.className = 'px-3.5 py-1.5 text-xs font-sans font-semibold rounded-lg transition-colors text-neutral-400 hover:text-white';
+      subContainer.classList.remove('hidden');
+      updateSubToggleUI();
+    }
+
+    renderInputs();
+
+    setTimeout(() => {
+      const scrollEl = (mode === 'target')
+        ? document.getElementById('targetSubToggleContainer')
+        : document.getElementById('dynamicInputsGrid');
+      if (scrollEl) {
+        scrollEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, 50);
+  }
+
+  function setTargetSubMode(sub) {
+    targetSubMode = sub;
+    updateSubToggleUI();
+    renderInputs();
+  }
+
+  function updateSubToggleUI() {
+    const btnPeriod = document.getElementById('targetSubBtn-period');
+    const btnContrib = document.getElementById('targetSubBtn-contrib');
+    if (!btnPeriod || !btnContrib) return;
+
+    if (targetSubMode === 'period') {
+      btnPeriod.className = 'px-3.5 py-1.5 text-xs font-sans font-semibold rounded-lg transition-colors bg-white text-[#121316] shadow-sm';
+      btnContrib.className = 'px-3.5 py-1.5 text-xs font-sans font-semibold rounded-lg transition-colors text-neutral-400 hover:text-white';
+    } else {
+      btnContrib.className = 'px-3.5 py-1.5 text-xs font-sans font-semibold rounded-lg transition-colors bg-white text-[#121316] shadow-sm';
+      btnPeriod.className = 'px-3.5 py-1.5 text-xs font-sans font-semibold rounded-lg transition-colors text-neutral-400 hover:text-white';
+    }
+  }
+
+  function setPlan(plan) {
+    currentPlan = plan;
+    const body = document.getElementById('appBody');
+    body.classList.remove('theme-sip', 'theme-rd', 'theme-fd');
+
+    const btnSIP = document.getElementById('planBtn-SIP');
+    const btnRD = document.getElementById('planBtn-RD');
+    const btnFD = document.getElementById('planBtn-FD');
+    const sub = document.getElementById('planSubtitle');
+    const mainBtn = document.getElementById('mainSubmitBtn');
+
+    [btnSIP, btnRD, btnFD].forEach(btn => {
+      btn.className = 'relative flex flex-col items-center justify-center text-center py-3 px-3 sm:px-5 rounded-xl font-sans cursor-pointer transition-colors bg-[#141413] text-white hover:bg-[#1f1f1d] border border-[#27272a]';
+      const subEl = btn.querySelector('.plan-sub');
+      if (subEl) subEl.className = 'plan-sub hidden sm:block text-[11px] text-neutral-400 font-normal mt-0.5';
+    });
+
+    if (plan === 'SIP') {
+      body.classList.add('theme-sip');
+      btnSIP.className = 'relative flex flex-col items-center justify-center text-center py-3 px-3 sm:px-5 rounded-xl font-sans cursor-pointer transition-colors bg-[#059669] text-white shadow-sm';
+      const subEl = btnSIP.querySelector('.plan-sub');
+      if (subEl) subEl.className = 'plan-sub hidden sm:block text-[11px] text-emerald-100 font-normal mt-0.5';
+      sub.innerText = 'Systematic Investment Plan — Monthly accumulation compounded through diversified equity yields.';
+      if (mainBtn) {
+        mainBtn.className = 'text-white font-sans text-sm font-bold tracking-wide py-3.5 px-8 rounded-xl flex items-center justify-center space-x-2 w-full sm:w-auto cursor-pointer bg-[#059669] hover:bg-[#047857] active:scale-[0.98] transition-all shadow-sm';
+      }
+    } else if (plan === 'RD') {
+      body.classList.add('theme-rd');
+      btnRD.className = 'relative flex flex-col items-center justify-center text-center py-3 px-3 sm:px-5 rounded-xl font-sans cursor-pointer transition-colors bg-[#2563EB] text-white shadow-sm';
+      const subEl = btnRD.querySelector('.plan-sub');
+      if (subEl) subEl.className = 'plan-sub hidden sm:block text-[11px] text-blue-100 font-normal mt-0.5';
+      sub.innerText = 'Recurring Deposit — Guaranteed term savings compounded quarterly via standard banking schedules.';
+      if (mainBtn) {
+        mainBtn.className = 'text-white font-sans text-sm font-bold tracking-wide py-3.5 px-8 rounded-xl flex items-center justify-center space-x-2 w-full sm:w-auto cursor-pointer bg-[#2563EB] hover:bg-[#1D4ED8] active:scale-[0.98] transition-all shadow-sm';
+      }
+    } else if (plan === 'FD') {
+      body.classList.add('theme-fd');
+      btnFD.className = 'relative flex flex-col items-center justify-center text-center py-3 px-3 sm:px-5 rounded-xl font-sans cursor-pointer transition-colors bg-[#DC2626] text-white shadow-sm';
+      const subEl = btnFD.querySelector('.plan-sub');
+      if (subEl) subEl.className = 'plan-sub hidden sm:block text-[11px] text-red-100 font-normal mt-0.5';
+      sub.innerText = 'Fixed Deposit — Fixed term deposit yielding quarterly compounded guaranteed returns.';
+      if (mainBtn) {
+        mainBtn.className = 'text-white font-sans text-sm font-bold tracking-wide py-3.5 px-8 rounded-xl flex items-center justify-center space-x-2 w-full sm:w-auto cursor-pointer bg-[#DC2626] hover:bg-[#B91C1C] active:scale-[0.98] transition-all shadow-sm';
+      }
+    }
+
+    renderInputs();
+  }
+
+  function animateCounter(elementId, targetNumber, isCurrency = true) {
+    const el = document.getElementById(elementId);
+    if (!el) return;
+    if (!isCurrency) {
+      el.innerText = targetNumber;
+      return;
+    }
+    el.innerText = formatIndianWordsNotation(targetNumber);
+  }
+
+  // Financial Calculations
+  function handleCalculate(e, shouldScroll = true) {
+    if (e && e.preventDefault) e.preventDefault();
+
+    const resultSec = document.getElementById('resultSection');
+    const mainLabel = document.getElementById('resultMainLabel');
+    const mainAmount = document.getElementById('resultMainAmount');
+    const extraPill = document.getElementById('resultExtraPill');
+    const metric1Label = document.getElementById('metric1Label');
+    const metric2Label = document.getElementById('metric2Label');
+    const metric1Val = document.getElementById('metric1Val');
+    const metric2Val = document.getElementById('metric2Val');
+
+    const p = parseFloat(document.getElementById('input_p')?.value) || 0;
+    const r = parseFloat(document.getElementById('input_r')?.value) || 0;
+    const t = parseFloat(document.getElementById('input_t')?.value) || 0;
+
+    let chartMonthlyP = 10000;
+    let chartYears = 10;
+
+    if (calcMode === 'investment') {
+      let resultAmount = 0;
+      let invested = 0;
+      let profit = 0;
+
+      if (currentPlan === 'SIP') {
+        const i = (r / 100) / 12;
+        const n = Math.round(t * 12);
+        chartYears = t;
+        chartMonthlyP = p;
+        resultAmount = i > 0 ? p * ((Math.pow(1 + i, n) - 1) / i) * (1 + i) : p * n;
+        invested = p * n;
+        profit = resultAmount - invested;
+      } else if (currentPlan === 'RD') {
+        const n = Math.round(t * 12);
+        chartYears = t;
+        chartMonthlyP = p;
+        let totalMaturity = 0;
+        for (let k = 1; k <= n; k++) {
+          totalMaturity += p * Math.pow(1 + (r / 400), (n - k + 1) / 3);
+        }
+        resultAmount = totalMaturity;
+        invested = p * n;
+        profit = resultAmount - invested;
+      } else if (currentPlan === 'FD') {
+        chartYears = t;
+        chartMonthlyP = p / 12;
+        resultAmount = p * Math.pow(1 + (r / 400), 4 * t);
+        invested = p;
+        profit = resultAmount - invested;
+      }
+
+      mainLabel.innerText = 'Maturity Amount';
+      animateCounter('resultMainAmount', resultAmount);
+      extraPill.innerText = '';
+      metric1Label.innerText = currentPlan === 'FD' ? 'Principal' : 'Total Invested';
+      metric2Label.innerText = 'Est. Returns';
+      animateCounter('metric1Val', invested);
+      animateCounter('metric2Val', profit);
+
+      lastCalculatedData = {
+        rate: r,
+        years: chartYears,
+        monthlyP: chartMonthlyP,
+        resultAmount: resultAmount
+      };
+    } 
+    else if (calcMode === 'target' && targetSubMode === 'period') {
+      const targetCorpus = p;
+      const years = t;
+      let requiredInstallment = 0;
+      let totalInvested = 0;
+
+      if (currentPlan === 'SIP') {
+        const i = (r / 100) / 12;
+        const n = Math.round(years * 12);
+        const factor = i > 0 ? ((Math.pow(1 + i, n) - 1) / i) * (1 + i) : n;
+        requiredInstallment = targetCorpus / factor;
+        totalInvested = requiredInstallment * n;
+        mainLabel.innerText = 'Required Monthly SIP';
+        metric1Label.innerText = 'Total Invested';
+        metric2Label.innerText = 'Target Goal';
+        animateCounter('metric2Val', targetCorpus);
+        chartMonthlyP = requiredInstallment;
+      } else if (currentPlan === 'RD') {
+        const n = Math.round(years * 12);
+        let factor = 0;
+        for (let k = 1; k <= n; k++) {
+          factor += Math.pow(1 + (r / 400), (n - k + 1) / 3);
+        }
+        requiredInstallment = targetCorpus / factor;
+        totalInvested = requiredInstallment * n;
+        mainLabel.innerText = 'Required Monthly Deposit';
+        metric1Label.innerText = 'Total Invested';
+        metric2Label.innerText = 'Target Goal';
+        animateCounter('metric2Val', targetCorpus);
+        chartMonthlyP = requiredInstallment;
+      } else if (currentPlan === 'FD') {
+        requiredInstallment = targetCorpus / Math.pow(1 + (r / 400), 4 * years);
+        totalInvested = requiredInstallment;
+        mainLabel.innerText = 'Required Initial Deposit';
+        metric1Label.innerText = 'Principal Needed';
+        metric2Label.innerText = 'Target Goal';
+        animateCounter('metric2Val', targetCorpus);
+        chartMonthlyP = requiredInstallment / 12;
+      }
+
+      chartYears = years;
+      animateCounter('resultMainAmount', requiredInstallment);
+      extraPill.innerText = `Target: ${formatIndianWordsNotation(targetCorpus)}`;
+      animateCounter('metric1Val', totalInvested);
+
+      lastCalculatedData = {
+        rate: r,
+        years: chartYears,
+        monthlyP: chartMonthlyP,
+        resultAmount: targetCorpus
+      };
+    } 
+    else if (calcMode === 'target' && targetSubMode === 'contribution') {
+      const targetCorpus = p;
+      const depositVal = t;
+      let calculatedYears = 1;
+      let totalInvested = 0;
+
+      if (currentPlan === 'SIP') {
+        const i = (r / 100) / 12;
+        if (i > 0 && depositVal > 0) {
+          const numerator = targetCorpus * i;
+          const denom = depositVal * (1 + i);
+          const ratio = 1 + (numerator / denom);
+          const n = Math.log(ratio) / Math.log(1 + i);
+          calculatedYears = Math.max(0.5, Math.round((n / 12) * 10) / 10);
+        } else {
+          calculatedYears = depositVal > 0 ? (targetCorpus / (depositVal * 12)) : 0;
+        }
+        totalInvested = depositVal * (calculatedYears * 12);
+        chartMonthlyP = depositVal;
+      } else if (currentPlan === 'RD') {
+        let months = 1;
+        for (let m = 1; m <= 360; m++) {
+          let sum = 0;
+          for (let k = 1; k <= m; k++) {
+            sum += depositVal * Math.pow(1 + (r / 400), (m - k + 1) / 3);
+          }
+          if (sum >= targetCorpus) {
+            months = m;
+            break;
+          }
+        }
+        calculatedYears = Math.round((months / 12) * 10) / 10;
+        totalInvested = depositVal * months;
+        chartMonthlyP = depositVal;
+      } else if (currentPlan === 'FD') {
+        if (depositVal > 0 && targetCorpus > depositVal) {
+          const t_val = Math.log(targetCorpus / depositVal) / (4 * Math.log(1 + (r / 400)));
+          calculatedYears = Math.max(0.5, Math.round(t_val * 10) / 10);
+        } else {
+          calculatedYears = 1;
+        }
+        totalInvested = depositVal;
+        chartMonthlyP = depositVal / 12;
+      }
+
+      chartYears = Math.max(1, Math.min(35, Math.round(calculatedYears)));
+      mainLabel.innerText = 'Required Time';
+      mainAmount.innerText = `${calculatedYears} Years`;
+      extraPill.innerText = `Target: ${formatIndianWordsNotation(targetCorpus)}`;
+      metric1Label.innerText = 'Total Invested';
+      metric2Label.innerText = 'Target Goal';
+      animateCounter('metric1Val', totalInvested);
+      animateCounter('metric2Val', targetCorpus);
+
+      lastCalculatedData = {
+        rate: r,
+        years: chartYears,
+        monthlyP: chartMonthlyP,
+        resultAmount: targetCorpus
+      };
+    }
+
+    resultSec.classList.remove('hidden');
+
+    if (!document.getElementById('comparisonSection').classList.contains('hidden')) {
+      renderComparisonGraph();
+    }
+
+    if (shouldScroll) {
+      setTimeout(() => {
+        resultSec.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }, 50);
+    }
+  }
+
+  function toggleComparison(shouldScroll = true) {
+    const comp = document.getElementById('comparisonSection');
+    const icon = document.getElementById('compareBtnIcon');
+    const isHidden = comp.classList.contains('hidden');
+
+    if (isHidden) {
+      comp.classList.remove('hidden');
+      icon.innerText = 'expand_less';
+      renderComparisonGraph();
+      if (shouldScroll) {
+        setTimeout(() => {
+          comp.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }, 60);
+      }
+    } else {
+      comp.classList.add('hidden');
+      icon.innerText = 'expand_more';
+    }
+  }
+
+  function renderComparisonGraph() {
+    const horizonYears = Math.max(3, Math.min(30, Math.round(lastCalculatedData?.years || 10)));
+    const baseMonthly = Math.max(500, lastCalculatedData?.monthlyP || 10000);
+
+    const sipRate = currentPlan === 'SIP' ? (lastCalculatedData?.rate || 12) : 12;
+    const rdRate = currentPlan === 'RD' ? (lastCalculatedData?.rate || 7.1) : 7.1;
+    const fdRate = currentPlan === 'FD' ? (lastCalculatedData?.rate || 7.5) : 7.5;
+    const fdLumpSum = baseMonthly * 12;
+
+    comparisonDataPoints = [];
+    let maxVal = 0;
+
+    for (let y = 1; y <= horizonYears; y++) {
+      const n = y * 12;
+      const i_sip = (sipRate / 100) / 12;
+      const sipVal = baseMonthly * ((Math.pow(1 + i_sip, n) - 1) / i_sip) * (1 + i_sip);
+
+      let rdVal = 0;
+      for (let k = 1; k <= n; k++) {
+        rdVal += baseMonthly * Math.pow(1 + (rdRate / 400), (n - k + 1) / 3);
+      }
+
+      const fdVal = fdLumpSum * Math.pow(1 + (fdRate / 400), 4 * y);
+
+      maxVal = Math.max(maxVal, sipVal, rdVal, fdVal);
+      comparisonDataPoints.push({ year: y, sip: sipVal, rd: rdVal, fd: fdVal });
+    }
+
+    const peakEl = document.getElementById('peakMaxAmount');
+    if (peakEl) {
+      peakEl.innerText = formatIndianWordsNotation(maxVal);
+    }
+
+    const svgWidth = 700;
+    const svgHeight = 240;
+    const padTop = 25;
+    const padBottom = 45;
+    const chartHeight = svgHeight - padTop - padBottom;
+
+    const getX = (idx) => (idx / (horizonYears - 1)) * svgWidth;
+    const getY = (val) => svgHeight - padBottom - ((val / maxVal) * chartHeight);
+
+    let dSIP = '', dRD = '', dFD = '', dAreaSIP = '', dAreaRD = '', dAreaFD = '';
+
+    comparisonDataPoints.forEach((pt, idx) => {
+      const x = getX(idx);
+      const ySIP = getY(pt.sip);
+      const yRD = getY(pt.rd);
+      const yFD = getY(pt.fd);
+
+      if (idx === 0) {
+        dSIP = `M ${x} ${ySIP}`;
+        dRD = `M ${x} ${yRD}`;
+        dFD = `M ${x} ${yFD}`;
+        dAreaSIP = `M ${x} ${svgHeight - padBottom} L ${x} ${ySIP}`;
+        dAreaRD = `M ${x} ${svgHeight - padBottom} L ${x} ${yRD}`;
+        dAreaFD = `M ${x} ${svgHeight - padBottom} L ${x} ${yFD}`;
+      } else {
+        dSIP += ` L ${x} ${ySIP}`;
+        dRD += ` L ${x} ${yRD}`;
+        dFD += ` L ${x} ${yFD}`;
+        dAreaSIP += ` L ${x} ${ySIP}`;
+        dAreaRD += ` L ${x} ${yRD}`;
+        dAreaFD += ` L ${x} ${yFD}`;
+      }
+    });
+
+    const lastX = getX(comparisonDataPoints.length - 1);
+    dAreaSIP += ` L ${lastX} ${svgHeight - padBottom} Z`;
+    dAreaRD += ` L ${lastX} ${svgHeight - padBottom} Z`;
+    dAreaFD += ` L ${lastX} ${svgHeight - padBottom} Z`;
+
+    document.getElementById('pathSIP').setAttribute('d', dSIP);
+    document.getElementById('pathRD').setAttribute('d', dRD);
+    document.getElementById('pathFD').setAttribute('d', dFD);
+    document.getElementById('areaSIP').setAttribute('d', dAreaSIP);
+    document.getElementById('areaRD').setAttribute('d', dAreaRD);
+    document.getElementById('areaFD').setAttribute('d', dAreaFD);
+
+    [document.getElementById('pathSIP'), document.getElementById('pathRD'), document.getElementById('pathFD')].forEach(p => {
+      p.classList.remove('chart-line');
+      void p.offsetWidth;
+      p.classList.add('chart-line');
+    });
+
+    const xAxis = document.getElementById('chartXAxis');
+    const step = Math.max(1, Math.floor(horizonYears / 5));
+    let markersHtml = '';
+    comparisonDataPoints.forEach((pt, idx) => {
+      if (idx === 0 || idx === horizonYears - 1 || idx % step === 0) {
+        markersHtml += `<span>Year ${pt.year}</span>`;
+      }
+    });
+    xAxis.innerHTML = markersHtml;
+
+    setupGraphHover(getX, getY);
+  }
+
+  function setupGraphHover(getX, getY) {
+    const wrapper = document.getElementById('graphWrapper');
+    const tooltip = document.getElementById('chartTooltip');
+    const hoverLine = document.getElementById('hoverLine');
+    const dotSIP = document.getElementById('dotSIP');
+    const dotRD = document.getElementById('dotRD');
+    const dotFD = document.getElementById('dotFD');
+
+    wrapper.onmousemove = (e) => {
+      if (!comparisonDataPoints.length) return;
+      const rect = wrapper.getBoundingClientRect();
+      const mouseX = e.clientX - rect.left;
+      const pct = Math.max(0, Math.min(1, mouseX / rect.width));
+      const index = Math.round(pct * (comparisonDataPoints.length - 1));
+      const pt = comparisonDataPoints[index];
+      if (!pt) return;
+
+      const xPos = getX(index);
+      const ySIP = getY(pt.sip);
+      const yRD = getY(pt.rd);
+      const yFD = getY(pt.fd);
+
+      hoverLine.classList.remove('hidden');
+      hoverLine.setAttribute('x1', xPos);
+      hoverLine.setAttribute('x2', xPos);
+
+      dotSIP.classList.remove('hidden');
+      dotSIP.setAttribute('cx', xPos);
+      dotSIP.setAttribute('cy', ySIP);
+
+      dotRD.classList.remove('hidden');
+      dotRD.setAttribute('cx', xPos);
+      dotRD.setAttribute('cy', yRD);
+
+      dotFD.classList.remove('hidden');
+      dotFD.setAttribute('cx', xPos);
+      dotFD.setAttribute('cy', yFD);
+
+      tooltip.classList.remove('hidden');
+      const tooltipX = Math.min(rect.width - 240, Math.max(10, mouseX - 60));
+      tooltip.style.left = `${tooltipX}px`;
+      tooltip.style.top = `25px`;
+
+      document.getElementById('tooltipYear').innerText = `Year ${pt.year} of ${comparisonDataPoints.length}`;
+      document.getElementById('tooltipSIP').innerText = formatIndianWordsNotation(pt.sip);
+      document.getElementById('tooltipRD').innerText = formatIndianWordsNotation(pt.rd);
+      document.getElementById('tooltipFD').innerText = formatIndianWordsNotation(pt.fd);
+    };
+
+    wrapper.onmouseleave = () => {
+      tooltip.classList.add('hidden');
+      hoverLine.classList.add('hidden');
+      dotSIP.classList.add('hidden');
+      dotRD.classList.add('hidden');
+      dotFD.classList.add('hidden');
+    };
+  }
+
+  function selectDialVehicle(vehicle) {
+    ['SIP', 'RD', 'FD'].forEach(v => {
+      const tab = document.getElementById(`dialTab-${v}`);
+      const anim = document.getElementById(`animContainer-${v}`);
+      if (v === vehicle) {
+        if (v === 'SIP') tab.className = 'px-4 py-1.5 text-xs font-mono font-bold rounded-lg transition-all bg-[#059669] text-white cursor-pointer';
+        if (v === 'RD') tab.className = 'px-4 py-1.5 text-xs font-mono font-bold rounded-lg transition-all bg-[#2563EB] text-white cursor-pointer';
+        if (v === 'FD') tab.className = 'px-4 py-1.5 text-xs font-mono font-bold rounded-lg transition-all bg-[#DC2626] text-white cursor-pointer';
+        if (anim) {
+          anim.classList.remove('hidden');
+          const svg = anim.querySelector('svg');
+          if (svg) {
+            svg.style.animation = 'none';
+            void svg.offsetHeight;
+            svg.style.animation = '';
+          }
+        }
+      } else {
+        tab.className = 'px-4 py-1.5 text-xs font-mono font-semibold rounded-lg transition-all text-[#5F605A] hover:text-[#121316] cursor-pointer';
+        if (anim) anim.classList.add('hidden');
+      }
+    });
+  }
+
+  function showPage(pageId) {
+    const pageCalc = document.getElementById('pageCalculator');
+    const pageHow = document.getElementById('pageHowItWorks');
+    const pageInst = document.getElementById('pageInstructions');
+    const navLabel = document.getElementById('navToggleLabel');
+    const navIcon = document.getElementById('navToggleIcon');
+    const instBtn = document.getElementById('navInstructionsBtn');
+
+    activePageView = pageId;
+
+    pageCalc.classList.add('hidden');
+    pageHow.classList.add('hidden');
+    pageInst.classList.add('hidden');
+
+    if (pageId === 'calculator') {
+      pageCalc.classList.remove('hidden');
+      navLabel.innerText = 'How It Works';
+      navIcon.innerText = 'arrow_forward';
+      instBtn.className = 'inline-flex items-center space-x-1.5 font-mono text-[11px] font-semibold px-3 py-1.5 rounded-lg border border-black bg-[#121316] text-white hover:bg-neutral-800 transition-colors shadow-sm cursor-pointer';
+    } else if (pageId === 'howItWorks') {
+      pageHow.classList.remove('hidden');
+      navLabel.innerText = 'Return to Calculator';
+      navIcon.innerText = 'arrow_back';
+      instBtn.className = 'inline-flex items-center space-x-1.5 font-mono text-[11px] font-semibold px-3 py-1.5 rounded-lg border border-black bg-[#121316] text-white hover:bg-neutral-800 transition-colors shadow-sm cursor-pointer';
+      selectDialVehicle(currentPlan);
+    } else if (pageId === 'instructions') {
+      pageInst.classList.remove('hidden');
+      navLabel.innerText = 'How It Works';
+      navIcon.innerText = 'arrow_forward';
+      instBtn.className = 'inline-flex items-center space-x-1.5 font-mono text-[11px] font-semibold px-3 py-1.5 rounded-lg border border-black bg-[#121316] text-white hover:bg-neutral-800 transition-colors shadow-sm cursor-pointer';
+    }
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function toggleHowItWorks() {
+    if (activePageView === 'howItWorks') {
+      showPage('calculator');
+    } else {
+      showPage('howItWorks');
+    }
+  }
+
+  // Backwards compatibility
+  function togglePage() {
+    toggleHowItWorks();
+  }
+
+  window.addEventListener('DOMContentLoaded', () => {
+    renderInputs();
+    selectDialVehicle('SIP');
+  });
+</script>
+
+
+</body></html>
